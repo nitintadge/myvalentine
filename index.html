@@ -11,126 +11,115 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Chosen Palette: Sweet Romance (Soft Pinks, Warm Reds, Clean Whites) -->
-    <!-- Application Structure Plan: Two main states managed via Vanilla JS. State 1: The 'Proposal' card with the interactive runaway button. State 2: The 'Celebration' dashboard featuring a 'Love Metrics' chart and canvas-based confetti. This structure prioritizes the user's playful narrative flow designated in the prompt. -->
+    <!-- Chosen Palette: Sweet Romance -->
+    <!-- Application Structure Plan: Improved the button container to use a relative-positioned flexbox. This ensures buttons start side-by-side. The NO button is absolute-positioned within the card once interaction begins to allow the "runaway" effect without shifting the YES button. -->
     <!-- Visualization & Content Choices: 
-         1. Runaway Button: JavaScript positioning logic to gamify the rejection option.
-         2. Celebration Chart: Chart.js Doughnut chart to visualize 'Reasons I Love You', fulfilling the 'Inform/Organize' goal in a humorous data-driven way.
-         3. Confetti: HTML5 Canvas custom particle system for the 'Wow' factor.
-         4. Layout: Flexbox centered layout for focus and simplicity. 
+         - Side-by-Side Buttons: Flexbox row for initial state.
+         - Runaway Logic: Transitioned to 'transform' based movement for smoother interaction.
+         - Data: Chart.js doughnut for a playful "Love Analysis".
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 
     <style>
         body {
             font-family: 'Quicksand', sans-serif;
-            background-color: #fce7f3; /* pink-100 */
-            overflow-x: hidden; /* Prevent scroll bars from flying buttons */
+            background-color: #fff1f2; /* Rose-50 */
+            overflow: hidden; /* Prevents scrollbars when button moves */
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-center: center;
         }
         h1, h2 {
             font-family: 'Pacifico', cursive;
         }
-        .btn-transition {
-            transition: all 0.2s ease;
-        }
-        /* Chart container constraint classes */
-        .chart-container {
-            position: relative;
-            width: 100%;
-            max-width: 400px; /* Kept small for the card layout */
-            margin-left: auto;
-            margin-right: auto;
-            height: 300px;
-            max-height: 300px;
-        }
-        /* Heartbeat animation for the main icon */
-        @keyframes heartbeat {
-            0% { transform: scale(1); }
-            15% { transform: scale(1.15); }
-            30% { transform: scale(1); }
-            45% { transform: scale(1.15); }
-            60% { transform: scale(1); }
-        }
         .heart-beat {
             animation: heartbeat 2s infinite;
         }
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            15% { transform: scale(1.1); }
+            30% { transform: scale(1); }
+            45% { transform: scale(1.1); }
+            60% { transform: scale(1); }
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+            height: 250px;
+        }
+        #btn-no {
+            transition: all 0.15s ease-out;
+            z-index: 50;
+        }
+        #btn-yes {
+            z-index: 40;
+        }
+        /* Mobile adjustment to ensure card stays centered */
+        @media (max-width: 640px) {
+            .main-card {
+                width: 90%;
+                margin: auto;
+            }
+        }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 relative">
+<body class="p-4">
 
-    <!-- Confetti Canvas (Hidden initially, covers screen on success) -->
-    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50 opacity-0 transition-opacity duration-1000"></canvas>
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-[100] opacity-0 transition-opacity duration-1000"></canvas>
 
-    <!-- Main Card Container -->
-    <main id="main-card" class="bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-full text-center relative z-10 border-4 border-pink-200 transition-all duration-500 transform hover:scale-[1.01]">
+    <!-- Main Card -->
+    <main id="main-card" class="bg-white rounded-3xl shadow-2xl p-6 md:p-10 max-w-lg w-full text-center relative border-4 border-pink-100 mx-auto">
         
-        <!-- INTRODUCTORY CONTEXT (Hidden in UI but structurally present for accessibility/context) -->
-        <div class="sr-only">
-            This is an interactive proposal card. It presents a question to the user and offers two choices, one of which is elusive.
-        </div>
-
-        <!-- STATE 1: THE PROPOSAL -->
-        <div id="proposal-view" class="flex flex-col items-center space-y-8">
-            <div class="text-6xl text-red-500 heart-beat">❤️</div>
+        <!-- PROPOSAL STATE -->
+        <div id="proposal-view" class="space-y-8">
+            <div class="text-7xl text-red-500 heart-beat">❤️</div>
             
             <div class="space-y-4">
                 <h1 class="text-4xl md:text-5xl text-pink-600 leading-tight">Will you be my Valentine?</h1>
-                <p class="text-gray-600 text-lg">I promise to buy you snacks and tell you bad jokes.</p>
+                <p class="text-gray-500 text-lg">I have a very important question...</p>
             </div>
 
-            <!-- Interaction Area -->
-            <div class="relative w-full h-32 flex justify-center items-center gap-4" id="button-container">
-                <!-- YES Button -->
-                <button id="btn-yes" class="btn-transition bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full text-xl shadow-lg transform hover:scale-110 focus:outline-none ring-4 ring-green-200">
+            <!-- BUTTON CONTAINER: Forces them to be side-by-side -->
+            <div class="flex flex-row justify-center items-center gap-6 md:gap-10 min-h-[100px] relative" id="button-area">
+                
+                <button id="btn-yes" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-10 rounded-full text-xl shadow-lg transition-transform active:scale-95 ring-4 ring-green-100">
                     YES! 😍
                 </button>
 
-                <!-- NO Button (The Runaway) -->
-                <!-- We use inline style for absolute positioning logic in JS -->
-                <button id="btn-no" class="btn-transition bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-3 px-8 rounded-full text-xl shadow-lg absolute focus:outline-none">
+                <button id="btn-no" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-4 px-10 rounded-full text-xl shadow-lg">
                     NO 😢
                 </button>
+
             </div>
         </div>
 
-        <!-- STATE 2: THE CELEBRATION (Hidden initially) -->
+        <!-- CELEBRATION STATE -->
         <div id="celebration-view" class="hidden flex-col items-center space-y-6">
-            <h2 class="text-3xl md:text-4xl text-green-600">Yay! Good Choice! 🎉</h2>
-            <p class="text-gray-700 text-lg">I knew you loved me! Here is the data to prove it:</p>
+            <h2 class="text-4xl text-green-600">Perfect Choice! 🎉</h2>
+            <p class="text-gray-600 text-lg">I knew you'd say yes! Here is why:</p>
 
-            <!-- Chart Section -->
-            <div class="w-full flex flex-col items-center">
-                <div class="chart-container">
-                    <canvas id="loveChart"></canvas>
-                </div>
-                <p class="text-sm text-gray-400 mt-2 italic">Source: My Heart Database, 2025</p>
+            <div class="chart-container">
+                <canvas id="loveChart"></canvas>
             </div>
 
-            <div class="bg-pink-50 p-4 rounded-xl w-full border border-pink-100">
-                <h3 class="text-pink-600 font-bold text-lg mb-2">🎁 Your Funny Gift</h3>
-                <p class="text-gray-700">One (1) coupon redeemable for:</p>
-                <div class="text-xl font-bold text-purple-600 mt-1" id="gift-text">Unlimited Back Scratches</div>
+            <div class="bg-pink-50 p-5 rounded-2xl w-full border-2 border-dashed border-pink-200">
+                <h3 class="text-pink-600 font-bold text-xl mb-1">🎁 Your Official Gift</h3>
+                <div id="gift-text" class="text-2xl font-bold text-purple-600">Unlimited Foot Rubs</div>
+                <p class="text-xs text-gray-400 mt-2 italic">Valid forever. Non-transferable.</p>
             </div>
 
-            <p class="text-xs text-gray-400">Happy Valentine's Day! ❤️</p>
+            <p class="text-pink-400 text-sm">Happy Valentine's Day! I Love You! ❤️</p>
         </div>
 
     </main>
 
     <script>
-        // --- DATA & STATE MANAGEMENT ---
-        const state = {
-            accepted: false,
-            attempts: 0,
-            giftOptions: [
-                "Unlimited Back Scratches",
-                "One Free 'You're Right' Argument",
-                "Dinner of Your Choice (I Pay)",
-                "Full Remote Control Authority"
-            ]
-        };
-
-        // --- DOM ELEMENTS ---
         const btnYes = document.getElementById('btn-yes');
         const btnNo = document.getElementById('btn-no');
         const proposalView = document.getElementById('proposal-view');
@@ -138,211 +127,104 @@
         const mainCard = document.getElementById('main-card');
         const giftText = document.getElementById('gift-text');
         const canvas = document.getElementById('confetti-canvas');
-        const buttonContainer = document.getElementById('button-container');
 
-        // --- INTERACTION LOGIC: THE RUNAWAY BUTTON ---
-        
-        // Helper to get random number within range
-        function getRandomInt(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
+        const gifts = [
+            "Unlimited Back Scratches",
+            "A Week of No Chores",
+            "100% Authority over Netflix",
+            "A Very Fancy Dinner Date",
+            "A Massive Box of Your Favorite Snacks"
+        ];
 
-        // The core logic to move the button
+        // RUNAWAY LOGIC
         function moveButton() {
-            // Get container dimensions to keep button inside the "interaction area" roughly
-            // However, to be funny, we allow it to roam the whole card or even slightly outside
-            // For usability on mobile, we'll keep it within the card bounds.
-            
+            // Get card dimensions to keep the button bounded
             const cardRect = mainCard.getBoundingClientRect();
             const btnRect = btnNo.getBoundingClientRect();
-            
-            // Calculate available space within the card
-            // We use fixed offsets to ensure it jumps significantly
-            const padding = 20;
-            const maxX = cardRect.width - btnRect.width - padding;
-            const maxY = cardRect.height - btnRect.height - padding;
 
-            // Generate new random positions
-            // We apply these as 'left' and 'top' relative to the closest positioned ancestor (button container or card)
-            // To make it easiest, we will shift the button container to relative, but the button is absolute.
-            // Actually, let's just use fixed styles relative to the card for maximum chaos.
-            
-            // We need to change the button to position: fixed or absolute relative to body if we want it to really fly,
-            // but keeping it inside the card is cleaner UI.
-            // Let's check the container. #button-container is relative.
-            
-            // We will set Top/Left relative to the container, but extend bounds to the main card size roughly
-            // Since the container is small (h-32), we might want to make it jump OUT of the container but inside the card.
-            // Hack: Change button to position: fixed for a moment? No, let's keep it simple.
-            // We will just change left/top to random values.
-            
-            const randomX = getRandomInt(-100, 200); // Allow it to jump left/right
-            const randomY = getRandomInt(-200, 200); // Allow it to jump up/down
-            
+            // Calculate random positions within the card boundaries
+            // We subtract button size and some padding to keep it inside the white card
+            const maxX = cardRect.width - btnRect.width - 40;
+            const maxY = cardRect.height - btnRect.height - 40;
+
+            const randomX = Math.floor(Math.random() * maxX) - (maxX / 2);
+            const randomY = Math.floor(Math.random() * maxY) - (maxY / 2);
+
+            // Once it starts moving, we use absolute positioning logic via transform
+            btnNo.style.position = 'absolute';
             btnNo.style.transform = `translate(${randomX}px, ${randomY}px)`;
-            
-            state.attempts++;
         }
 
-        // Event Listeners for the 'No' button
-        btnNo.addEventListener('mouseover', moveButton); // Desktop hover
-        btnNo.addEventListener('touchstart', (e) => { // Mobile tap attempt
-            e.preventDefault(); // Stop click
+        btnNo.addEventListener('mouseover', moveButton);
+        btnNo.addEventListener('touchstart', (e) => {
+            e.preventDefault();
             moveButton();
         });
-        btnNo.addEventListener('click', (e) => {
-            e.preventDefault();
-            moveButton(); // Just in case they click fast
-        });
 
-        // --- INTERACTION LOGIC: THE ACCEPTANCE ---
-        
+        // YES CLICK
         btnYes.addEventListener('click', () => {
-            state.accepted = true;
-            
-            // 1. UI Transition
             proposalView.classList.add('hidden');
             celebrationView.classList.remove('hidden');
             celebrationView.classList.add('flex');
             
-            // 2. Select Random Gift
-            giftText.innerText = state.giftOptions[Math.floor(Math.random() * state.giftOptions.length)];
-
-            // 3. Render Chart
-            renderLoveChart();
-
-            // 4. Start Confetti
-            initConfetti();
+            giftText.innerText = gifts[Math.floor(Math.random() * gifts.length)];
+            
+            renderChart();
+            startConfetti();
         });
 
-        // --- VISUALIZATION: CHART.JS ---
-        function renderLoveChart() {
+        // CHART LOGIC
+        function renderChart() {
             const ctx = document.getElementById('loveChart').getContext('2d');
-            
             new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Your Smile', 'Your Laugh', 'Your Kindness', 'Your Hugs', 'Everything Else'],
+                    labels: ['Kindness', 'Beauty', 'Humor', 'Patience', 'Everything'],
                     datasets: [{
-                        label: 'Love Composition',
-                        data: [20, 15, 25, 15, 25],
-                        backgroundColor: [
-                            '#f472b6', // pink-400
-                            '#f87171', // red-400
-                            '#fbbf24', // amber-400
-                            '#a78bfa', // violet-400
-                            '#34d399'  // emerald-400
-                        ],
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
+                        data: [20, 25, 15, 10, 30],
+                        backgroundColor: ['#f472b6', '#fb7185', '#fbbf24', '#818cf8', '#34d399'],
+                        borderWidth: 0
                     }]
                 },
                 options: {
-                    responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    family: "'Quicksand', sans-serif",
-                                    size: 12
-                                }
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Scientific Analysis of My Love',
-                            font: {
-                                family: "'Quicksand', sans-serif",
-                                size: 16
-                            },
-                            padding: {
-                                top: 10,
-                                bottom: 10
-                            }
-                        }
-                    },
-                    animation: {
-                        animateScale: true,
-                        animateRotate: true
+                        legend: { position: 'bottom' }
                     }
                 }
             });
         }
 
-        // --- VISUALIZATION: CANVAS CONFETTI ---
-        function initConfetti() {
+        // CONFETTI LOGIC
+        function startConfetti() {
             canvas.style.opacity = '1';
             const ctx = canvas.getContext('2d');
-            let width = window.innerWidth;
-            let height = window.innerHeight;
-            
-            canvas.width = width;
-            canvas.height = height;
+            let w = canvas.width = window.innerWidth;
+            let h = canvas.height = window.innerHeight;
+            const pieces = [];
 
-            const particles = [];
-            const particleCount = 150;
-            const colors = ['#ec4899', '#ef4444', '#f59e0b', '#10b981', '#3b82f6'];
-
-            class Particle {
-                constructor() {
-                    this.x = Math.random() * width;
-                    this.y = Math.random() * height - height; // Start above screen
-                    this.size = Math.random() * 10 + 5;
-                    this.speedY = Math.random() * 3 + 2;
-                    this.speedX = Math.random() * 2 - 1;
-                    this.color = colors[Math.floor(Math.random() * colors.length)];
-                    this.rotation = Math.random() * 360;
-                    this.rotationSpeed = Math.random() * 5 - 2.5;
-                }
-
-                update() {
-                    this.y += this.speedY;
-                    this.x += this.speedX;
-                    this.rotation += this.rotationSpeed;
-
-                    if (this.y > height) {
-                        this.y = -20;
-                        this.x = Math.random() * width;
-                    }
-                }
-
-                draw() {
-                    ctx.save();
-                    ctx.translate(this.x, this.y);
-                    ctx.rotate(this.rotation * Math.PI / 180);
-                    ctx.fillStyle = this.color;
-                    ctx.fillRect(0, 0, this.size, this.size);
-                    ctx.restore();
-                }
-            }
-
-            // Init particles
-            for (let i = 0; i < particleCount; i++) {
-                particles.push(new Particle());
-            }
-
-            function animate() {
-                ctx.clearRect(0, 0, width, height);
-                particles.forEach(p => {
-                    p.update();
-                    p.draw();
+            for (let i = 0; i < 100; i++) {
+                pieces.push({
+                    x: Math.random() * w,
+                    y: Math.random() * h - h,
+                    s: Math.random() * 10 + 5,
+                    v: Math.random() * 3 + 2,
+                    c: ['#f472b6', '#fb7185', '#fbbf24'][Math.floor(Math.random() * 3)]
                 });
-                requestAnimationFrame(animate);
             }
 
-            // Handle Resize
-            window.addEventListener('resize', () => {
-                width = window.innerWidth;
-                height = window.innerHeight;
-                canvas.width = width;
-                canvas.height = height;
-            });
-
-            animate();
+            function draw() {
+                ctx.clearRect(0, 0, w, h);
+                pieces.forEach(p => {
+                    p.y += p.v;
+                    if (p.y > h) p.y = -20;
+                    ctx.fillStyle = p.c;
+                    ctx.fillRect(p.x, p.y, p.s, p.s);
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
         }
-
     </script>
 </body>
 </html>
